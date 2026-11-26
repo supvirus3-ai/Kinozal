@@ -1,0 +1,981 @@
+<!DOCTYPE html>
+<html lang="ru" data-theme="dark">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover, interactive-widget=resizes-content">
+<meta name="theme-color" content="#17121D">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="icon" href="icon-192.png">
+<link rel="apple-touch-icon" href="icon-192.png">
+<title>Кинозал</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Onest:wght@400;500;600&family=Unbounded:wght@600;700&display=swap" rel="stylesheet">
+<style>
+:root{
+  --bg:#17121D; --surface:#231B2C; --raise:#30263C; --line:#3C3149;
+  --text:#F4EDE3; --sub:#A99FB6;
+  --accent:#FFB347; --on-accent:#2B1A00; --danger:#FF7D7D;
+  --display:"Unbounded","Onest",system-ui,sans-serif;
+  --body:"Onest",system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;
+}
+[data-theme="light"]{
+  --bg:#F1ECF6; --surface:#FFFFFF; --raise:#E6DEEF; --line:#D6CCE3;
+  --text:#22192D; --sub:#6D6380;
+  --accent:#F2A12C; --on-accent:#2B1A00; --danger:#CC3F3F;
+}
+*{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+html{background:var(--bg)}
+html.lock,html.lock body{overflow:hidden}
+body{margin:0;background:var(--bg);color:var(--text);font:400 16px/1.45 var(--body);min-height:100vh}
+button,input{font:inherit;color:inherit}
+button{cursor:pointer}
+svg{width:1em;height:1em;display:block}
+[hidden]{display:none !important}
+:focus-visible{outline:3px solid var(--accent);outline-offset:2px}
+
+.app{max-width:720px;margin:0 auto;padding:calc(18px + env(safe-area-inset-top)) 18px calc(128px + env(safe-area-inset-bottom))}
+
+.top{display:flex;align-items:flex-start;justify-content:space-between;gap:12px}
+h1{margin:0;font:700 30px/1.1 var(--display);letter-spacing:-.02em}
+#count{margin:6px 0 0;color:var(--sub);font-size:14.5px}
+.round{flex:none;width:46px;height:46px;border-radius:50%;border:0;background:var(--surface);display:grid;place-items:center;font-size:22px}
+
+.search{position:relative;margin:18px 0 14px}
+.search svg{position:absolute;left:16px;top:50%;transform:translateY(-50%);font-size:20px;color:var(--sub)}
+.search input{width:100%;height:50px;border:2px solid transparent;border-radius:16px;background:var(--surface);padding:0 16px 0 46px;outline:0}
+.search input:focus{border-color:var(--accent)}
+.search input::placeholder{color:var(--sub)}
+
+.chips{display:flex;gap:8px;overflow-x:auto;margin:0 -18px;padding:2px 18px 6px;scrollbar-width:none}
+.chips::-webkit-scrollbar{display:none}
+.chip{flex:none;display:flex;align-items:center;gap:6px;height:40px;padding:0 17px;border-radius:999px;border:0;background:var(--surface);color:var(--sub);font-weight:500;font-size:15px}
+.chip svg{font-size:14px}
+.chip[aria-pressed="true"]{background:var(--accent);color:var(--on-accent);font-weight:600}
+
+.grid{display:grid;align-items:start;grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:22px 14px;margin-top:18px}
+.card{background:none;border:0;padding:0;text-align:left;min-width:0}
+.poster{position:relative;aspect-ratio:2/3;border-radius:16px;overflow:hidden;background:var(--surface);box-shadow:0 12px 26px rgba(0,0,0,.32)}
+.poster img{width:100%;height:100%;object-fit:cover;display:block}
+.ph{width:100%;height:100%;display:grid;place-items:center;background:linear-gradient(160deg,var(--a),var(--b))}
+.ph span{font:700 54px/1 var(--display);color:rgba(255,255,255,.88)}
+.badge{position:absolute;left:8px;top:8px;width:28px;height:28px;border-radius:50%;display:grid;place-items:center;background:rgba(14,9,20,.62);color:#fff;font-size:14px;backdrop-filter:blur(6px);-webkit-backdrop-filter:blur(6px)}
+.badge.dl{top:auto;bottom:8px;background:var(--accent);color:var(--on-accent)}
+.prog{position:absolute;left:0;right:0;bottom:0;height:7px;background:rgba(0,0,0,.5)}
+.prog i{display:block;height:100%;width:0;background:var(--accent)}
+.card h3{margin:10px 2px 2px;font:600 15px/1.25 var(--body);display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden;overflow-wrap:anywhere}
+.card p{margin:0 2px;color:var(--sub);font-size:13px}
+
+.empty{text-align:center;padding:56px 12px 0;color:var(--sub)}
+.empty b{display:block;color:var(--text);font:600 18px/1.3 var(--display);margin-bottom:10px}
+.empty p{margin:0 auto;max-width:300px}
+
+.dock{position:fixed;left:0;right:0;bottom:0;padding:26px 18px calc(16px + env(safe-area-inset-bottom));background:linear-gradient(to top,var(--bg) 58%,transparent);pointer-events:none;z-index:10}
+.dock .primary{display:flex;max-width:684px;margin:0 auto;pointer-events:auto;width:100%;height:58px;font-size:17px;box-shadow:0 12px 28px rgba(0,0,0,.35)}
+
+.primary,.soft,.ghost,.danger{height:50px;border:0;border-radius:999px;padding:0 22px;font-weight:600;font-size:15.5px;display:flex;align-items:center;justify-content:center;gap:8px}
+.primary{background:var(--accent);color:var(--on-accent)}
+.primary svg{font-size:20px}
+.primary:disabled{opacity:.6}
+.soft{background:var(--raise);color:var(--text)}
+.ghost{background:transparent;color:var(--sub)}
+.danger{background:var(--raise);color:var(--danger)}
+
+.layer{position:fixed;inset:0;z-index:50;display:flex;align-items:flex-end;justify-content:center}
+.backdrop{position:absolute;inset:0;background:rgba(8,4,12,.62);opacity:0;transition:opacity .2s}
+.sheet{position:relative;width:100%;max-width:560px;max-height:92%;overflow:auto;background:var(--surface);border-radius:28px 28px 0 0;padding:10px 20px calc(22px + env(safe-area-inset-bottom));transform:translateY(100%);transition:transform .24s cubic-bezier(.2,.8,.2,1);box-shadow:0 -20px 50px rgba(0,0,0,.35)}
+.layer.open .backdrop{opacity:1}
+.layer.open .sheet{transform:none}
+.grab{width:42px;height:4px;border-radius:2px;background:var(--line);margin:0 auto 14px}
+.sheet h2{margin:0 0 14px;font:700 19px/1.25 var(--display);letter-spacing:-.01em}
+.sheet .text{margin:0 0 6px;color:var(--sub)}
+.lbl{display:block;margin:16px 0 8px;font-weight:600;font-size:14.5px}
+.hint{margin:8px 2px 0;color:var(--sub);font-size:13.5px}
+.err{margin:12px 2px 0;min-height:20px;color:var(--danger);font-size:14px}
+.field{width:100%;height:52px;border-radius:14px;border:2px solid var(--line);background:var(--bg);padding:0 16px;outline:0}
+.field:focus{border-color:var(--accent)}
+.field::placeholder{color:var(--sub)}
+.pick{display:flex;flex-wrap:wrap;gap:8px}
+.pk{height:38px;padding:0 15px;border-radius:999px;border:0;background:var(--raise);color:var(--text);font-size:14.5px;display:flex;align-items:center;gap:6px}
+.pk svg{font-size:13px}
+.pk[aria-pressed="true"]{background:var(--accent);color:var(--on-accent);font-weight:600}
+.coverrow{display:flex;gap:16px;align-items:flex-start}
+.coverrow .poster{width:96px;flex:none;border-radius:12px}
+.coverrow .col{flex:1;display:flex;flex-direction:column;gap:8px;min-width:0}
+.coverrow .col button{height:44px;font-size:14.5px}
+.actions{display:flex;gap:10px;margin-top:20px}
+.actions>*{flex:1}
+.actions.col{flex-direction:column}
+.actions.col>*{flex:none}
+.row2{display:flex;gap:10px}
+.row2>*{flex:1}
+.dhead{display:flex;gap:16px;align-items:flex-start}
+.dhead .poster{width:112px;flex:none}
+.dhead .meta{flex:1;min-width:0}
+.dhead .field{font-weight:600}
+.seg{display:flex;background:var(--raise);border-radius:999px;padding:4px;margin-bottom:6px}
+.seg button{flex:1;height:42px;border:0;border-radius:999px;background:transparent;color:var(--sub);font-weight:500}
+.seg button[aria-pressed="true"]{background:var(--accent);color:var(--on-accent);font-weight:600}
+.catlist{list-style:none;margin:0 0 12px;padding:0;display:flex;flex-direction:column;gap:4px}
+.catlist li{display:flex;align-items:center;justify-content:space-between;gap:10px;min-height:38px;padding:0 4px 0 14px;border-radius:12px;background:var(--bg)}
+.catlist button{height:34px;padding:0 14px;font-size:13.5px;border-radius:999px;border:0;background:var(--raise);color:var(--danger)}
+.inline{display:flex;gap:8px}
+.inline .field{flex:1}
+.inline .soft{flex:none;height:52px}
+.opt{display:flex;gap:12px;align-items:flex-start;margin-top:14px;padding:14px;border-radius:16px;background:var(--bg);cursor:pointer}
+.opt input{width:22px;height:22px;flex:none;margin:2px 0 0;accent-color:var(--accent)}
+.opt b{display:block;font-weight:600;font-size:15px}
+.opt small{display:block;margin-top:2px;color:var(--sub);font-size:13.5px;line-height:1.35}
+.bar{height:8px;border-radius:4px;background:var(--raise);overflow:hidden;margin-top:14px}
+.bar i{display:block;height:100%;width:0;background:var(--accent)}
+.saved{display:flex;gap:10px;align-items:flex-start;margin-top:16px;padding:14px;border-radius:16px;background:var(--bg);color:var(--sub);font-size:14px}
+.saved svg{flex:none;font-size:20px;color:var(--accent);margin-top:1px}
+
+.viewer{position:fixed;inset:0;z-index:90;background:#000;display:flex;align-items:center;justify-content:center}
+.viewer[hidden]{display:none}
+.viewer video,.viewer img{max-width:100%;max-height:100%;display:block}
+.viewer video{width:100%;height:100%;background:#000}
+.vclose{position:absolute;right:14px;top:calc(14px + env(safe-area-inset-top));z-index:2;width:46px;height:46px;border-radius:50%;border:0;background:rgba(20,14,26,.72);color:#fff;font-size:22px;display:grid;place-items:center}
+.verr{position:absolute;left:20px;right:20px;bottom:calc(40px + env(safe-area-inset-bottom));padding:16px;border-radius:18px;background:var(--surface);color:var(--text);text-align:center}
+.verr a{display:inline-block;margin-top:10px;color:var(--accent);font-weight:600}
+
+.toast{position:fixed;left:50%;bottom:calc(100px + env(safe-area-inset-bottom));transform:translate(-50%,12px);z-index:95;max-width:calc(100% - 40px);padding:11px 20px;border-radius:999px;background:var(--text);color:var(--bg);font-weight:500;font-size:14.5px;text-align:center;opacity:0;pointer-events:none;transition:opacity .2s,transform .2s}
+.toast.on{opacity:1;transform:translate(-50%,0)}
+.toast.long{border-radius:18px}
+
+@media (prefers-reduced-motion:reduce){
+  .backdrop,.sheet,.toast{transition:none}
+}
+</style>
+</head>
+<body>
+
+<div class="app">
+  <header class="top">
+    <div>
+      <h1>Кинозал</h1>
+      <p id="count"></p>
+    </div>
+    <button class="round" id="btnSettings" aria-label="Настройки"></button>
+  </header>
+
+  <div class="search">
+    <span id="searchIcon"></span>
+    <input id="q" type="search" placeholder="Найти по названию" autocomplete="off" aria-label="Поиск по названию">
+  </div>
+
+  <nav class="chips" id="chips" aria-label="Категории"></nav>
+  <main class="grid" id="grid"></main>
+  <div class="empty" id="empty" hidden></div>
+</div>
+
+<div class="dock"><button class="primary" id="btnAdd"></button></div>
+
+<div class="viewer" id="viewer" hidden>
+  <button class="vclose" id="vClose" aria-label="Закрыть"></button>
+  <div id="vBody" style="display:contents"></div>
+</div>
+
+<div class="toast" id="toast" role="status"></div>
+
+<script>
+(() => {
+"use strict";
+
+/* ---------- мелочи ---------- */
+const $ = (s, r = document) => r.querySelector(s);
+const esc = s => String(s).replace(/[&<>"']/g, c => ({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
+const uid = () => Date.now().toString(36) + Math.random().toString(36).slice(2, 6);
+const svg = (inner, fill) => `<svg viewBox="0 0 24 24" aria-hidden="true" ${fill ? 'fill="currentColor"' : 'fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"'}>${inner}</svg>`;
+const ICON = {
+  play:  svg('<path d="M8 5.5v13l11-6.5z"/>', true),
+  photo: svg('<rect x="3.5" y="4.5" width="17" height="15" rx="3"/><circle cx="9" cy="10" r="1.6"/><path d="M5 18l5-5 3 3 2-2 4 4"/>'),
+  link:  svg('<path d="M10 14a4 4 0 0 0 5.7 0l3-3a4 4 0 0 0-5.7-5.7l-1 1"/><path d="M14 10a4 4 0 0 0-5.7 0l-3 3a4 4 0 0 0 5.7 5.7l1-1"/>'),
+  plus:  svg('<path d="M12 5v14M5 12h14"/>'),
+  tune:  svg('<path d="M4 7h9M19 7h1M4 17h1M11 17h9"/><circle cx="16" cy="7" r="2.2"/><circle cx="8" cy="17" r="2.2"/>'),
+  search:svg('<circle cx="11" cy="11" r="6.5"/><path d="M16 16l4.5 4.5"/>'),
+  lock:  svg('<rect x="5" y="10.5" width="14" height="9.5" rx="2.5"/><path d="M8.5 10.5V8a3.5 3.5 0 0 1 7 0v2.5"/>'),
+  close: svg('<path d="M6 6l12 12M18 6L6 18"/>'),
+  down:  svg('<path d="M12 4.5v10M7.5 10.5l4.5 4.5 4.5-4.5M5 19.5h14"/>')
+};
+const iconFor = kind => kind === "image" ? ICON.photo : kind === "link" ? ICON.link : ICON.play;
+const plural = (n, f) => (n % 10 === 1 && n % 100 !== 11) ? f[0] : (n % 10 >= 2 && n % 10 <= 4 && (n % 100 < 12 || n % 100 > 14)) ? f[1] : f[2];
+function fmtSize(n) {
+  if (n < 1e6) return Math.max(1, Math.round(n / 1e3)) + " КБ";
+  if (n < 1e9) return (n / 1e6).toFixed(n < 1e8 ? 1 : 0).replace(".", ",") + " МБ";
+  return (n / 1e9).toFixed(1).replace(".", ",") + " ГБ";
+}
+
+/* ---------- данные ---------- */
+const ADULT = "18+";
+const SAVED_TAB = "Скачано";
+const DEFAULT_CATS = ["Фильмы", "Мультфильмы", "Сериалы", "Клипы", "Фото", ADULT];
+const KEY = "kinozal.v1";
+
+function normalize(d) {
+  d = d || {};
+  let cats = Array.isArray(d.cats) ? d.cats.filter(c => typeof c === "string" && c.trim()) : [];
+  if (!cats.length) cats = DEFAULT_CATS.slice();
+  if (!cats.includes(ADULT)) cats.push(ADULT);
+  const items = (Array.isArray(d.items) ? d.items : []).filter(i => i && i.id && i.title && (i.url || i.saved))
+    .map(i => ({ id: String(i.id), title: String(i.title), url: i.url ? String(i.url) : "", kind: i.kind || "link",
+                 cat: typeof i.cat === "string" ? i.cat : "", cover: typeof i.cover === "string" ? i.cover : "",
+                 added: Number(i.added) || 0, saved: !!i.saved, size: Number(i.size) || 0, mime: i.mime ? String(i.mime) : "" }));
+  return { items, cats, theme: d.theme === "light" ? "light" : "dark" };
+}
+function load() {
+  try {
+    const raw = localStorage.getItem(KEY);
+    if (raw) return normalize(JSON.parse(raw));
+  } catch (e) { /* память браузера недоступна */ }
+  return normalize({});
+}
+function save() {
+  try { localStorage.setItem(KEY, JSON.stringify(store)); return true; }
+  catch (e) {
+    toast("Не удалось сохранить: память браузера закрыта или заполнена");
+    return false;
+  }
+}
+
+let store = load();
+let selected = "Все";
+let query = "";
+let adult = false;            // раздел 18+ открыт только на время сессии
+const find = id => store.items.find(i => i.id === id);
+
+/* ---------- память телефона для видео (OPFS) ---------- */
+const supportsFS = !!(navigator.storage && navigator.storage.getDirectory);
+const FS = {
+  async root() { return navigator.storage.getDirectory(); },
+  async write(name, stream, onProgress, total) {
+    const root = await FS.root();
+    const fh = await root.getFileHandle(name, { create: true });
+    const w = await fh.createWritable();
+    const reader = stream.getReader();
+    let loaded = 0;
+    try {
+      for (;;) {
+        const { done, value } = await reader.read();
+        if (done) break;
+        await w.write(value);
+        loaded += value.byteLength;
+        if (onProgress) onProgress(loaded, total);
+      }
+      await w.close();
+    } catch (e) {
+      try { await w.abort(); } catch (e2) { /* уже закрыт */ }
+      await FS.remove(name);
+      throw e;
+    }
+    return loaded;
+  },
+  async blob(it) {
+    const root = await FS.root();
+    const fh = await root.getFileHandle(it.id);
+    const f = await fh.getFile();
+    return it.mime ? f.slice(0, f.size, it.mime) : f;
+  },
+  async remove(name) {
+    try { const root = await FS.root(); await root.removeEntry(name); } catch (e) { /* файла нет */ }
+  }
+};
+function persist() { try { if (navigator.storage && navigator.storage.persist) navigator.storage.persist(); } catch (e) { /* не страшно */ } }
+const storageError = e => e && e.name === "QuotaExceededError" ? "Не хватает места на телефоне." : null;
+
+/* ---------- определение ссылки ---------- */
+function detect(raw) {
+  let u;
+  try { u = new URL(raw); } catch (e) { return { kind: "bad" }; }
+  if (!/^https?:$/.test(u.protocol)) return { kind: "bad" };
+  const host = u.hostname.toLowerCase().replace(/^(www|m)\./, "");
+  const path = u.pathname.toLowerCase();
+  if (/(^|\.)youtube\.com$|^youtu\.be$|(^|\.)youtube-nocookie\.com$/.test(host)) {
+    let id = "";
+    if (host === "youtu.be") id = u.pathname.slice(1).split("/")[0];
+    else if (u.searchParams.get("v")) id = u.searchParams.get("v");
+    else { const m = u.pathname.match(/\/(shorts|embed|live|v)\/([\w-]{6,})/); if (m) id = m[2]; }
+    return { kind: "youtube", label: "YouTube", id };
+  }
+  if (/(^|\.)tiktok\.com$/.test(host)) return { kind: "tiktok", label: "TikTok" };
+  if (/\.(mp4|webm|mov|m4v|ogv|m3u8)$/.test(path)) return { kind: "video", label: "видеофайл", stream: /\.m3u8$/.test(path) };
+  if (/\.(jpe?g|png|gif|webp|avif|bmp)$/.test(path)) return { kind: "image", label: "фото" };
+  return { kind: "link", label: "обычная ссылка" };
+}
+const kindNote = it => {
+  if (it.saved) return "Сохранено в памяти телефона. Играет без интернета.";
+  return ({
+    video: "Видеофайл. Откроется и заиграет прямо здесь.",
+    youtube: "YouTube. Откроется в приложении или в браузере.",
+    tiktok: "TikTok. Откроется в приложении или в браузере.",
+    image: "Фото. Откроется здесь.",
+    link: "Обычная ссылка. Откроется в браузере."
+  })[it.kind] || "";
+};
+const canDownload = it => it.kind === "video" && !it.saved && /^https?:/.test(it.url) && !/\.m3u8(\?|#|$)/i.test(it.url);
+
+async function fetchMeta(kind, url) {
+  const ep = kind === "youtube" ? "https://www.youtube.com/oembed?format=json&url=" : "https://www.tiktok.com/oembed?url=";
+  const ctl = new AbortController();
+  const t = setTimeout(() => ctl.abort(), 6000);
+  try {
+    const r = await fetch(ep + encodeURIComponent(url), { signal: ctl.signal });
+    return r.ok ? await r.json() : null;
+  } catch (e) { return null; }
+  finally { clearTimeout(t); }
+}
+
+/* ---------- обложки ---------- */
+function hashHue(s) { let h = 0; for (const ch of s) h = (h * 31 + ch.codePointAt(0)) % 360; return h; }
+function placeholder(title) {
+  const h = hashHue(title || "?");
+  const letter = ([...(title || "?")].find(c => /[\p{L}\p{N}]/u.test(c)) || "?").toUpperCase();
+  return `<div class="ph" style="--a:hsl(${h} 48% 40%);--b:hsl(${(h + 45) % 360} 52% 22%)"><span>${esc(letter)}</span></div>`;
+}
+function coverHTML(cover, title) {
+  return cover
+    ? `<img src="${esc(cover)}" alt="" loading="lazy" referrerpolicy="no-referrer" data-t="${esc(title)}">`
+    : placeholder(title);
+}
+document.addEventListener("error", e => {
+  const t = e.target;
+  if (t && t.tagName === "IMG" && t.dataset.t !== undefined) t.outerHTML = placeholder(t.dataset.t);
+}, true);
+
+function drawCover(src, w, h) {
+  const W = 400, H = 600;
+  const c = document.createElement("canvas"); c.width = W; c.height = H;
+  const k = Math.max(W / w, H / h);
+  c.getContext("2d").drawImage(src, (W - w * k) / 2, (H - h * k) / 2, w * k, h * k);
+  return c.toDataURL("image/jpeg", 0.82);
+}
+async function fileToCover(file) {
+  let src, w, h;
+  try { src = await createImageBitmap(file); w = src.width; h = src.height; }
+  catch (e) {
+    const url = URL.createObjectURL(file);
+    try {
+      src = await new Promise((res, rej) => { const img = new Image(); img.onload = () => res(img); img.onerror = rej; img.src = url; });
+      w = src.naturalWidth; h = src.naturalHeight;
+    } finally { URL.revokeObjectURL(url); }
+  }
+  return drawCover(src, w, h);
+}
+// обложка из кадра самого видео (работает для файлов в памяти телефона)
+async function frameCover(blob) {
+  const url = URL.createObjectURL(blob);
+  try {
+    const v = document.createElement("video");
+    v.muted = true; v.playsInline = true; v.preload = "auto"; v.src = url;
+    await new Promise((res, rej) => {
+      v.onloadeddata = res; v.onerror = () => rej(new Error("video"));
+      setTimeout(() => rej(new Error("timeout")), 8000);
+    });
+    const t = isFinite(v.duration) ? Math.min(v.duration * 0.1, 30) : 0;
+    if (t > 0) await new Promise(res => { v.onseeked = res; v.currentTime = t; setTimeout(res, 3000); });
+    if (!v.videoWidth) throw new Error("no frame");
+    return drawCover(v, v.videoWidth, v.videoHeight);
+  } finally { URL.revokeObjectURL(url); }
+}
+
+/* ---------- главный экран ---------- */
+const downloads = new Map();   // id -> { ctl, pct }
+function hasSaved() { return store.items.some(i => i.saved && (adult || i.cat !== ADULT)); }
+
+function visible() {
+  const q = query.trim().toLowerCase();
+  return store.items
+    .filter(i => (adult || i.cat !== ADULT)
+      && (selected === "Все" || (selected === SAVED_TAB ? i.saved : i.cat === selected))
+      && (!q || i.title.toLowerCase().includes(q)))
+    .sort((a, b) => b.added - a.added);
+}
+
+function render() {
+  document.documentElement.dataset.theme = store.theme;
+  const meta = $('meta[name="theme-color"]');
+  if (meta) meta.content = store.theme === "light" ? "#F1ECF6" : "#17121D";
+  if (selected === SAVED_TAB && !hasSaved()) selected = "Все";
+
+  const total = store.items.filter(i => adult || i.cat !== ADULT).length;
+  $("#count").textContent = total ? `${total} ${plural(total, ["запись", "записи", "записей"])} в коллекции` : "Коллекция пока пуста";
+
+  const tabs = ["Все"];
+  if (hasSaved()) tabs.push(SAVED_TAB);
+  tabs.push(...store.cats);
+  $("#chips").innerHTML = tabs.map(c =>
+    `<button class="chip" data-cat="${esc(c)}" aria-pressed="${c === selected}">${c === ADULT && !adult ? ICON.lock : ""}${c === SAVED_TAB ? ICON.down : ""}${esc(c)}</button>`).join("");
+
+  const list = visible();
+  $("#grid").innerHTML = list.map(i => {
+    const d = downloads.get(i.id);
+    return `
+    <button class="card" data-id="${esc(i.id)}">
+      <div class="poster">${coverHTML(i.cover, i.title)}<span class="badge">${iconFor(i.kind)}</span>${i.saved ? `<span class="badge dl" title="Сохранено на телефоне">${ICON.down}</span>` : ""}${d ? `<div class="prog"><i style="width:${d.pct}%"></i></div>` : ""}</div>
+      <h3>${esc(i.title)}</h3>
+      <p>${esc(i.cat || "Без категории")}</p>
+    </button>`;
+  }).join("");
+
+  const empty = $("#empty");
+  if (!list.length) {
+    empty.hidden = false;
+    if (query.trim()) empty.innerHTML = "<b>Ничего не найдено</b><p>Попробуйте другое слово или выберите другую категорию.</p>";
+    else if (!total) empty.innerHTML = "<b>Здесь пока пусто</b><p>Нажмите «Добавить»: вставьте ссылку на видео или выберите файл с телефона.</p>";
+    else empty.innerHTML = "<b>В этой категории пусто</b><p>Добавьте сюда что-нибудь кнопкой внизу.</p>";
+  } else empty.hidden = true;
+}
+
+/* ---------- окошки снизу и кнопка «Назад» ---------- */
+const layers = [];             // { el, close, closeByBack }
+let skipPop = 0;
+function syncLock() { document.documentElement.classList.toggle("lock", layers.length > 0 || !$("#viewer").hidden); }
+function pushState() { try { history.pushState({ kz: 1 }, ""); } catch (e) { /* без истории */ } }
+function popState() {
+  try { if (history.state && history.state.kz) { skipPop++; history.back(); } } catch (e) { /* без истории */ }
+}
+
+function openSheet(build) {
+  const el = document.createElement("div");
+  el.className = "layer";
+  el.innerHTML = '<div class="backdrop"></div><section class="sheet" role="dialog" aria-modal="true"><div class="grab"></div><div class="body"></div></section>';
+  document.body.appendChild(el);
+  pushState();
+  let closed = false;
+  const doClose = byBack => {
+    if (closed) return; closed = true;
+    el.classList.remove("open");
+    const i = layers.findIndex(l => l.el === el); if (i >= 0) layers.splice(i, 1);
+    syncLock();
+    if (!byBack) popState();
+    setTimeout(() => el.remove(), 260);
+    if (onClose) onClose();
+  };
+  let onClose = null;
+  const layer = { el, close: () => doClose(false), closeByBack: () => doClose(true), setOnClose: f => { onClose = f; } };
+  layers.push(layer);
+  syncLock();
+  $(".backdrop", el).addEventListener("click", layer.close);
+  build($(".body", el), layer.close, layer);
+  requestAnimationFrame(() => requestAnimationFrame(() => el.classList.add("open")));
+  return layer;
+}
+
+window.addEventListener("popstate", () => {
+  if (skipPop > 0) { skipPop--; return; }
+  if (!$("#viewer").hidden) { closeViewer(true); return; }
+  if (layers.length) layers[layers.length - 1].closeByBack();
+});
+
+let toastTimer;
+function toast(msg) {
+  const t = $("#toast");
+  t.textContent = msg;
+  t.classList.toggle("long", msg.length > 48);
+  t.classList.add("on");
+  clearTimeout(toastTimer);
+  toastTimer = setTimeout(() => t.classList.remove("on"), msg.length > 48 ? 5000 : 2400);
+}
+
+function confirmSheet(title, text, okLabel, onOk) {
+  openSheet((b, close) => {
+    b.innerHTML = `<h2>${esc(title)}</h2><p class="text">${esc(text)}</p>
+      <div class="actions"><button class="soft" data-a="no">Отмена</button><button class="danger" data-a="ok">${esc(okLabel)}</button></div>`;
+    $('[data-a="no"]', b).onclick = close;
+    $('[data-a="ok"]', b).onclick = () => { close(); onOk(); };
+  });
+}
+
+function gate(onYes, onNo) {
+  openSheet((b, close) => {
+    b.innerHTML = `<h2>Раздел 18+</h2>
+      <p class="text">Здесь могут быть материалы для взрослых. Вам исполнилось 18 лет?</p>
+      <div class="actions"><button class="soft" data-a="no">Мне нет 18</button><button class="primary" data-a="yes">Мне есть 18</button></div>`;
+    $('[data-a="no"]', b).onclick = () => { close(); if (onNo) onNo(); };
+    $('[data-a="yes"]', b).onclick = () => { adult = true; close(); render(); if (onYes) onYes(); };
+  });
+}
+
+function catPicker(box, current, onPick) {
+  const draw = () => {
+    box.innerHTML = store.cats.map(c =>
+      `<button class="pk" data-cat="${esc(c)}" aria-pressed="${c === current}">${c === ADULT && !adult ? ICON.lock : ""}${esc(c)}</button>`).join("");
+  };
+  draw();
+  box.addEventListener("click", e => {
+    const btn = e.target.closest(".pk"); if (!btn) return;
+    const c = btn.dataset.cat;
+    const choose = () => { current = c; draw(); onPick(c); };
+    if (c === ADULT && !adult) gate(choose); else choose();
+  });
+  return c => { current = c; draw(); onPick(c); };
+}
+
+/* ---------- скачивание по прямой ссылке ---------- */
+function updateProg(id) {
+  const d = downloads.get(id); if (!d) return;
+  const bar = $(`.card[data-id="${CSS.escape(id)}"] .prog i`);
+  if (bar) bar.style.width = d.pct + "%";
+  const dbar = $(`#dBar[data-id="${CSS.escape(id)}"] i`);
+  if (dbar) dbar.style.width = d.pct + "%";
+}
+const detailHooks = new Map(); // id -> перерисовать открытую карточку
+
+async function startDownload(it) {
+  if (!supportsFS) return toast("Этот браузер не умеет хранить видео. Откройте приложение в Chrome.");
+  if (downloads.has(it.id)) return;
+  const st = { ctl: new AbortController(), pct: 0 };
+  downloads.set(it.id, st);
+  render();
+  const hook = detailHooks.get(it.id); if (hook) hook();
+  try {
+    persist();
+    const r = await fetch(it.url, { signal: st.ctl.signal });
+    if (!r.ok) throw new Error("HTTP " + r.status);
+    if (!r.body) throw new Error("пустой ответ");
+    const total = +r.headers.get("content-length") || 0;
+    const mime = (r.headers.get("content-type") || "").split(";")[0];
+    let last = -1;
+    const size = await FS.write(it.id, r.body, l => {
+      st.pct = total ? Math.min(99, Math.floor(l / total * 100)) : 0;
+      if (st.pct !== last) { last = st.pct; updateProg(it.id); }
+    }, total);
+    it.saved = true; it.size = size;
+    it.mime = /^video\//.test(mime) ? mime : "video/mp4";
+    if (!it.cover) { try { it.cover = await frameCover(await FS.blob(it)); } catch (e) { /* заглушка останется */ } }
+    save();
+    toast(`Сохранено: «${it.title}»`);
+  } catch (e) {
+    await FS.remove(it.id);
+    if (e && e.name === "AbortError") toast("Загрузка отменена");
+    else if (storageError(e)) toast(storageError(e));
+    else if (e instanceof TypeError) toast("Сайт не разрешает скачивать это видео в приложение. Скачайте файл через браузер и добавьте его кнопкой «Файл».");
+    else toast("Не удалось скачать: " + (e && e.message ? e.message : "ошибка"));
+  } finally {
+    downloads.delete(it.id);
+    render();
+    const h = detailHooks.get(it.id); if (h) h();
+  }
+}
+
+/* ---------- добавление ---------- */
+function openAdd() {
+  const draft = { mode: "link", cover: "", custom: "", cat: "", titleTouched: false, file: null, busy: false };
+  const DEFAULT_NOTE = "Подойдёт YouTube, TikTok, прямая ссылка на видеофайл или на картинку.";
+  openSheet((b, close, layer) => {
+    b.innerHTML = `
+      <h2>Добавить в коллекцию</h2>
+      <div class="seg" id="aTabs">
+        <button type="button" data-m="link" aria-pressed="true">Ссылка</button>
+        <button type="button" data-m="file" aria-pressed="false">Файл с телефона</button>
+      </div>
+      <div id="aLinkBox">
+        <label class="lbl" for="aUrl">Ссылка</label>
+        <input class="field" id="aUrl" type="url" inputmode="url" autocomplete="off" placeholder="Вставьте ссылку">
+        <p class="hint" id="aNote">${DEFAULT_NOTE}</p>
+        <label class="opt" id="aOpt" hidden><input type="checkbox" id="aSaveOff"><span><b>Сохранить в приложении</b><small>Видео скачается в память телефона и будет играть без интернета.</small></span></label>
+      </div>
+      <div id="aFileBox" hidden>
+        <span class="lbl">Видео или фото</span>
+        <button class="soft" id="aFilePick" type="button" style="width:100%">Выбрать файл</button>
+        <p class="hint" id="aFileNote">Файл скопируется в память приложения, и его можно будет смотреть без интернета.</p>
+      </div>
+      <label class="lbl" for="aTitle">Название</label>
+      <input class="field" id="aTitle" autocomplete="off" placeholder="Например, Minecraft в кино">
+      <span class="lbl">Категория</span>
+      <div class="pick" id="aCats"></div>
+      <span class="lbl">Обложка</span>
+      <div class="coverrow">
+        <div class="poster" id="aCover"></div>
+        <div class="col">
+          <button class="soft" id="aPick" type="button">Выбрать из галереи</button>
+          <button class="ghost" id="aClear" type="button" hidden>Убрать свою</button>
+          <p class="hint" style="margin:0">Для YouTube, TikTok и файлов обложка подставится сама.</p>
+        </div>
+      </div>
+      <div class="bar" id="aBar" hidden><i></i></div>
+      <p class="err" id="aErr" role="alert"></p>
+      <div class="actions"><button class="soft" id="aCancel" type="button">Отмена</button><button class="primary" id="aSave" type="button">Сохранить</button></div>
+      <input type="file" id="aCoverFile" accept="image/*" hidden>
+      <input type="file" id="aFile" accept="video/*,image/*" hidden>`;
+    const urlEl = $("#aUrl", b), titleEl = $("#aTitle", b), noteEl = $("#aNote", b), errEl = $("#aErr", b);
+    const saveBtn = $("#aSave", b), barEl = $("#aBar", b);
+    const paint = () => {
+      $("#aCover", b).innerHTML = coverHTML(draft.custom || draft.cover, titleEl.value.trim() || "?");
+      $("#aClear", b).hidden = !draft.custom;
+    };
+    const setErr = t => { errEl.textContent = t; };
+    paint();
+
+    const setCat = catPicker($("#aCats", b), draft.cat, c => { draft.cat = c; setErr(""); });
+    titleEl.addEventListener("input", () => { draft.titleTouched = true; setErr(""); if ($("#aCover .ph", b)) paint(); });
+
+    // вкладки «Ссылка» и «Файл с телефона»
+    b.querySelectorAll("#aTabs button").forEach(btn => btn.onclick = () => {
+      if (draft.busy) return;
+      draft.mode = btn.dataset.m;
+      b.querySelectorAll("#aTabs button").forEach(x => x.setAttribute("aria-pressed", String(x === btn)));
+      $("#aLinkBox", b).hidden = draft.mode !== "link";
+      $("#aFileBox", b).hidden = draft.mode !== "file";
+      setErr("");
+      if (draft.mode === "link") { draft.cover = ""; onUrl(); }
+      else { draft.cover = ""; draft.file = null; $("#aFilePick", b).textContent = "Выбрать файл"; paint(); }
+    });
+
+    // --- ссылка
+    let timer;
+    urlEl.addEventListener("input", () => { clearTimeout(timer); timer = setTimeout(onUrl, 450); setErr(""); });
+    async function onUrl() {
+      if (draft.mode !== "link") return;
+      const url = urlEl.value.trim();
+      draft.cover = "";
+      $("#aOpt", b).hidden = true;
+      if (!url) { noteEl.textContent = DEFAULT_NOTE; paint(); return; }
+      const d = detect(url);
+      if (d.kind === "bad") { noteEl.textContent = "Это не похоже на ссылку. Она должна начинаться с http."; paint(); return; }
+      noteEl.textContent = kindNote({ kind: d.kind });
+      if (d.kind === "video" && !d.stream) $("#aOpt", b).hidden = !supportsFS;
+      if (d.kind === "image") { draft.cover = url; if (!draft.cat && store.cats.includes("Фото")) setCat("Фото"); }
+      if (d.kind === "youtube" && d.id) draft.cover = `https://i.ytimg.com/vi/${d.id}/hqdefault.jpg`;
+      paint();
+      if (d.kind === "youtube" || d.kind === "tiktok") {
+        const m = await fetchMeta(d.kind, url);
+        if (!m || urlEl.value.trim() !== url) return;
+        if (m.thumbnail_url) draft.cover = m.thumbnail_url;
+        if (!draft.titleTouched && m.title) titleEl.value = String(m.title).slice(0, 80);
+        paint();
+      }
+    }
+
+    // --- файл с телефона
+    $("#aFilePick", b).onclick = () => { if (!supportsFS) setErr("Этот браузер не умеет хранить файлы. Откройте приложение в Chrome."); else $("#aFile", b).click(); };
+    $("#aFile", b).onchange = async e => {
+      const f = e.target.files[0]; e.target.value = "";
+      if (!f) return;
+      const isVid = /^video\//.test(f.type) || /\.(mp4|webm|mov|m4v|mkv|ogv|3gp)$/i.test(f.name);
+      const isImg = /^image\//.test(f.type) || /\.(jpe?g|png|gif|webp|avif|bmp)$/i.test(f.name);
+      if (!isVid && !isImg) return setErr("Выберите видео или фото.");
+      draft.file = f; draft.kind = isImg && !isVid ? "image" : "video"; draft.cover = "";
+      $("#aFilePick", b).textContent = `${f.name} (${fmtSize(f.size)})`;
+      if (!draft.titleTouched) titleEl.value = f.name.replace(/\.[^.]+$/, "").replace(/[_]+/g, " ").slice(0, 80);
+      if (draft.kind === "image" && !draft.cat && store.cats.includes("Фото")) setCat("Фото");
+      setErr(""); paint();
+      try { draft.cover = draft.kind === "video" ? await frameCover(f) : await fileToCover(f); if (draft.file === f) paint(); } catch (err) { /* без кадра */ }
+    };
+
+    // --- своя обложка
+    $("#aPick", b).onclick = () => $("#aCoverFile", b).click();
+    $("#aCoverFile", b).onchange = async e => {
+      const f = e.target.files[0]; if (!f) return;
+      try { draft.custom = await fileToCover(f); paint(); setErr(""); }
+      catch (err) { setErr("Не удалось открыть картинку. Выберите другую."); }
+      e.target.value = "";
+    };
+    $("#aClear", b).onclick = () => { draft.custom = ""; paint(); };
+    $("#aCancel", b).onclick = () => { if (!draft.busy) close(); };
+
+    // --- сохранить
+    saveBtn.onclick = async () => {
+      if (draft.busy) return;
+      const title = titleEl.value.trim();
+      if (draft.mode === "link") {
+        const url = urlEl.value.trim(), d = detect(url);
+        if (d.kind === "bad") return setErr("Вставьте ссылку. Она должна начинаться с http.");
+        if (!title) return setErr("Введите название.");
+        if (!draft.cat) return setErr("Выберите категорию.");
+        const item = { id: uid(), title, url, kind: d.kind, cat: draft.cat, cover: draft.custom || draft.cover || "", added: Date.now(), saved: false, size: 0, mime: "" };
+        const wantOffline = d.kind === "video" && !d.stream && $("#aSaveOff", b).checked;
+        store.items.push(item);
+        if (!save()) { store.items.pop(); return setErr("Не удалось сохранить. Попробуйте обложку поменьше или удалите лишнее."); }
+        close(); render();
+        toast(`Добавлено в «${item.cat}»`);
+        if (wantOffline) startDownload(item);
+        return;
+      }
+      // файл с телефона копируем в память приложения
+      const f = draft.file;
+      if (!f) return setErr("Выберите файл.");
+      if (!title) return setErr("Введите название.");
+      if (!draft.cat) return setErr("Выберите категорию.");
+      const id = uid();
+      draft.busy = true; saveBtn.disabled = true; saveBtn.textContent = "Сохраняю… 0%";
+      barEl.hidden = false; setErr("");
+      try {
+        persist();
+        let last = -1;
+        const size = await FS.write(id, f.stream(), (l, t) => {
+          const pct = t ? Math.floor(l / t * 100) : 0;
+          if (pct !== last) { last = pct; saveBtn.textContent = `Сохраняю… ${pct}%`; $("i", barEl).style.width = pct + "%"; }
+        }, f.size);
+        let cover = draft.custom || draft.cover;
+        if (!cover) { try { cover = draft.kind === "video" ? await frameCover(f) : await fileToCover(f); } catch (e) { cover = ""; } }
+        const mime = f.type || (draft.kind === "video" ? "video/mp4" : "image/jpeg");
+        const item = { id, title, url: "", kind: draft.kind, cat: draft.cat, cover, added: Date.now(), saved: true, size, mime };
+        store.items.push(item);
+        if (!save()) { store.items.pop(); await FS.remove(id); throw new Error("save"); }
+        close(); render();
+        toast(`Сохранено на телефоне: «${title}»`);
+      } catch (e) {
+        await FS.remove(id);
+        draft.busy = false; saveBtn.disabled = false; saveBtn.textContent = "Сохранить";
+        barEl.hidden = true;
+        setErr(storageError(e) || "Не удалось сохранить файл. Попробуйте ещё раз.");
+      }
+    };
+  });
+}
+
+/* ---------- карточка записи ---------- */
+function openDetail(id) {
+  const it = find(id); if (!it) return;
+  openSheet((b, close, layer) => {
+    const draw = () => {
+      const dl = downloads.get(it.id);
+      const playLabel = (it.kind === "video" || it.saved) ? "Смотреть" : it.kind === "image" ? "Открыть фото" : "Открыть ссылку";
+      let extra = "";
+      if (dl) {
+        extra = `<div class="bar" id="dBar" data-id="${esc(it.id)}"><i style="width:${dl.pct}%"></i></div>
+                 <button class="soft" id="dCancel" type="button" style="width:100%;margin-top:12px">Отменить загрузку</button>`;
+      } else if (it.saved) {
+        extra = `<div class="saved">${ICON.down}<span>На телефоне, ${esc(fmtSize(it.size))}. Играет без интернета.${it.url ? '<br><a href="#" id="dUnsave" style="color:var(--accent);font-weight:600">Убрать из памяти</a>' : ""}</span></div>`;
+      } else if (canDownload(it) && supportsFS) {
+        extra = `<button class="soft" id="dSave" type="button" style="width:100%;margin-top:16px">${ICON.down}Сохранить для просмотра без интернета</button>`;
+      }
+      b.innerHTML = `
+        <div class="dhead">
+          <div class="poster" id="dCover">${coverHTML(it.cover, it.title)}</div>
+          <div class="meta">
+            <input class="field" id="dTitle" value="${esc(it.title)}" aria-label="Название" autocomplete="off">
+            <p class="hint">${esc(kindNote(it))}</p>
+          </div>
+        </div>
+        <span class="lbl">Категория</span>
+        <div class="pick" id="dCats"></div>
+        ${extra}
+        <div class="actions col">
+          <button class="primary" id="dPlay" type="button">${ICON.play}${playLabel}</button>
+          <div class="row2">
+            <button class="soft" id="dCoverBtn" type="button">Обложка</button>
+            <button class="danger" id="dDel" type="button">Удалить</button>
+          </div>
+        </div>
+        <input type="file" id="dFile" accept="image/*" hidden>`;
+      catPicker($("#dCats", b), it.cat, c => { it.cat = c; save(); render(); });
+      $("#dTitle", b).onchange = e => {
+        const v = e.target.value.trim();
+        if (v) { it.title = v; save(); render(); } else e.target.value = it.title;
+      };
+      $("#dPlay", b).onclick = () => play(it);
+      $("#dCoverBtn", b).onclick = () => $("#dFile", b).click();
+      $("#dFile", b).onchange = async e => {
+        const f = e.target.files[0]; if (!f) return;
+        try {
+          it.cover = await fileToCover(f);
+          if (save()) { $("#dCover", b).innerHTML = coverHTML(it.cover, it.title); render(); }
+        } catch (err) { toast("Не удалось открыть картинку"); }
+        e.target.value = "";
+      };
+      const s = $("#dSave", b); if (s) s.onclick = () => startDownload(it);
+      const c = $("#dCancel", b); if (c) c.onclick = () => { const d = downloads.get(it.id); if (d) d.ctl.abort(); };
+      const u = $("#dUnsave", b);
+      if (u) u.onclick = ev => {
+        ev.preventDefault();
+        confirmSheet("Убрать из памяти телефона?", "Файл удалится с телефона, а запись и ссылка останутся.", "Убрать", async () => {
+          await FS.remove(it.id); it.saved = false; it.size = 0; it.mime = ""; save(); render(); draw();
+        });
+      };
+      $("#dDel", b).onclick = () => confirmSheet("Удалить из коллекции?",
+        `«${it.title}» пропадёт отсюда${it.saved ? ", а сохранённый файл сотрётся с телефона" : ". Сама ссылка в интернете останется"}.`, "Удалить", async () => {
+          const d = downloads.get(it.id); if (d) d.ctl.abort();
+          await FS.remove(it.id);
+          store.items = store.items.filter(x => x.id !== it.id);
+          save(); close(); render(); toast("Удалено");
+        });
+    };
+    detailHooks.set(it.id, () => { if (b.isConnected) draw(); });
+    layer.setOnClose(() => detailHooks.delete(it.id));
+    draw();
+  });
+}
+
+/* ---------- просмотр ---------- */
+async function play(it) {
+  if (it.saved) {
+    try { return openViewer(it, URL.createObjectURL(await FS.blob(it)), true); }
+    catch (e) {
+      toast("Файл пропал из памяти телефона");
+      it.saved = false; it.size = 0;
+      if (!it.url) store.items = store.items.filter(x => x.id !== it.id);
+      save(); render(); return;
+    }
+  }
+  if (it.kind === "video" || it.kind === "image") return openViewer(it, it.url, false);
+  const a = document.createElement("a");
+  a.href = it.url; a.target = "_blank"; a.rel = "noopener noreferrer";
+  document.body.appendChild(a); a.click(); a.remove();
+}
+let viewerBlob = "";
+function openViewer(it, src, isBlob) {
+  const v = $("#viewer"), body = $("#vBody");
+  v.hidden = false; syncLock(); pushState();
+  viewerBlob = isBlob ? src : "";
+  if (it.kind === "image") {
+    body.innerHTML = `<img src="${esc(src)}" alt="${esc(it.title)}" referrerpolicy="no-referrer">`;
+  } else {
+    body.innerHTML = `<video src="${esc(src)}" controls autoplay playsinline></video>`;
+    const vid = $("video", body);
+    vid.addEventListener("error", () => {
+      if ($(".verr", body)) return;
+      const box = document.createElement("div");
+      box.className = "verr";
+      box.innerHTML = it.url
+        ? `Не удалось воспроизвести это видео здесь.<br><a href="${esc(it.url)}" target="_blank" rel="noopener noreferrer">Открыть ссылку в браузере</a>`
+        : "Не удалось воспроизвести этот файл. Возможно, телефон не поддерживает его формат.";
+      body.appendChild(box);
+    });
+  }
+}
+function closeViewer(byBack) {
+  const v = $("#viewer"); if (v.hidden) return;
+  const vid = $("video", v); if (vid) { vid.pause(); vid.removeAttribute("src"); vid.load(); }
+  $("#vBody").innerHTML = "";
+  if (viewerBlob) { URL.revokeObjectURL(viewerBlob); viewerBlob = ""; }
+  v.hidden = true; syncLock();
+  if (!byBack) popState();
+}
+
+/* ---------- настройки ---------- */
+let installEvent = null;
+window.addEventListener("beforeinstallprompt", e => { e.preventDefault(); installEvent = e; });
+window.addEventListener("appinstalled", () => { installEvent = null; toast("Приложение установлено"); });
+
+function openSettings() {
+  openSheet((b, close) => {
+    const draw = () => {
+      const standalone = window.matchMedia("(display-mode: standalone)").matches;
+      b.innerHTML = `
+        <h2>Настройки</h2>
+        <span class="lbl" style="margin-top:0">Тема</span>
+        <div class="seg">
+          <button data-theme="dark" aria-pressed="${store.theme === "dark"}">Тёмная</button>
+          <button data-theme="light" aria-pressed="${store.theme === "light"}">Светлая</button>
+        </div>
+        <span class="lbl">Категории</span>
+        <ul class="catlist">${store.cats.map((c, i) => `<li><span>${esc(c)}</span>${DEFAULT_CATS.includes(c) ? "" : `<button data-del="${i}">Удалить</button>`}</li>`).join("")}</ul>
+        <div class="inline"><input class="field" id="sNew" placeholder="Новая категория" maxlength="24" autocomplete="off"><button class="soft" id="sAdd" type="button">Добавить</button></div>
+        <span class="lbl">Память телефона</span>
+        <p class="hint" id="sUsage" style="margin-top:0">${supportsFS ? "Считаю…" : "Этот браузер не умеет хранить видео. Нужен Chrome."}</p>
+        <span class="lbl">Резервная копия</span>
+        <div class="row2"><button class="soft" id="sExport" type="button">Сохранить</button><button class="soft" id="sImport" type="button">Восстановить</button></div>
+        <p class="hint">Копия содержит список, категории и обложки. Сами видеофайлы в неё не входят.</p>
+        ${installEvent && !standalone ? '<div class="actions"><button class="primary" id="sInstall" type="button">Установить приложение</button></div>' : ""}
+        ${adult ? '<div class="actions"><button class="soft" id="sLock" type="button">Закрыть раздел 18+</button></div>' : ""}
+        <input type="file" id="sFile" accept="application/json,.json" hidden>`;
+      bind();
+      usage();
+    };
+    const usage = async () => {
+      const box = $("#sUsage", b);
+      if (!supportsFS || !box || !navigator.storage.estimate) return;
+      try {
+        const e = await navigator.storage.estimate();
+        const saved = store.items.filter(i => i.saved);
+        const sum = saved.reduce((a, i) => a + i.size, 0);
+        box.textContent = `Сохранено видео и фото: ${saved.length}, ${fmtSize(sum)}. Свободно примерно ${fmtSize(Math.max(0, (e.quota || 0) - (e.usage || 0)))}.`;
+      } catch (err) { box.textContent = ""; }
+    };
+    const bind = () => {
+      b.querySelectorAll("[data-theme]").forEach(btn => btn.onclick = () => {
+        store.theme = btn.dataset.theme; save(); render(); draw();
+      });
+      b.querySelectorAll("[data-del]").forEach(btn => btn.onclick = () => {
+        const name = store.cats[+btn.dataset.del];
+        confirmSheet(`Удалить категорию «${name}»?`, "Записи из неё останутся в «Все», но будут без категории.", "Удалить", () => {
+          store.cats = store.cats.filter(c => c !== name);
+          store.items.forEach(i => { if (i.cat === name) i.cat = ""; });
+          if (selected === name) selected = "Все";
+          save(); render(); draw();
+        });
+      });
+      $("#sAdd", b).onclick = () => {
+        const inp = $("#sNew", b), name = inp.value.trim();
+        if (!name) return;
+        if (name === "Все" || name === SAVED_TAB || store.cats.some(c => c.toLowerCase() === name.toLowerCase())) return toast("Такая категория уже есть");
+        store.cats.splice(store.cats.indexOf(ADULT), 0, name);
+        save(); render(); draw();
+      };
+      $("#sExport", b).onclick = () => {
+        const copy = { ...store, items: store.items.map(i => ({ ...i, saved: false, size: 0, mime: "" })).filter(i => i.url) };
+        const blob = new Blob([JSON.stringify(copy)], { type: "application/json" });
+        const a = document.createElement("a");
+        a.href = URL.createObjectURL(blob); a.download = "kinozal-kopiya.json";
+        document.body.appendChild(a); a.click(); a.remove();
+        setTimeout(() => URL.revokeObjectURL(a.href), 4000);
+      };
+      $("#sImport", b).onclick = () => $("#sFile", b).click();
+      $("#sFile", b).onchange = e => {
+        const f = e.target.files[0]; if (!f) return;
+        const r = new FileReader();
+        r.onload = () => {
+          let data;
+          try { data = JSON.parse(r.result); } catch (err) { return toast("Это не файл копии"); }
+          if (!data || !Array.isArray(data.items)) return toast("Это не файл копии");
+          const next = normalize(data);
+          const keep = store.items.filter(i => i.saved);   // сохранённые на телефоне файлы не теряем
+          confirmSheet("Заменить коллекцию?", `Сейчас записей: ${store.items.length}. В копии: ${next.items.length}. Записи, сохранённые на телефоне (${keep.length}), останутся.`, "Заменить", () => {
+            store = next; store.items.push(...keep); selected = "Все"; save(); render(); draw(); toast("Копия восстановлена");
+          });
+        };
+        r.readAsText(f);
+        e.target.value = "";
+      };
+      const inst = $("#sInstall", b);
+      if (inst) inst.onclick = async () => {
+        if (!installEvent) return;
+        installEvent.prompt();
+        try { await installEvent.userChoice; } catch (err) { /* закрыли окно */ }
+        installEvent = null; draw();
+      };
+      const lock = $("#sLock", b);
+      if (lock) lock.onclick = () => { adult = false; if (selected === ADULT) selected = "Все"; render(); draw(); toast("Раздел 18+ закрыт"); };
+    };
+    draw();
+  });
+}
+
+/* ---------- запуск ---------- */
+$("#searchIcon").innerHTML = ICON.search;
+$("#btnSettings").innerHTML = ICON.tune;
+$("#btnAdd").innerHTML = ICON.plus + "Добавить";
+$("#vClose").innerHTML = ICON.close;
+
+$("#btnAdd").onclick = openAdd;
+$("#btnSettings").onclick = openSettings;
+$("#vClose").onclick = () => closeViewer(false);
+$("#q").addEventListener("input", e => { query = e.target.value; render(); });
+$("#chips").addEventListener("click", e => {
+  const btn = e.target.closest(".chip"); if (!btn) return;
+  const c = btn.dataset.cat;
+  if (c === ADULT && !adult) gate(() => { selected = c; render(); });
+  else { selected = c; render(); }
+});
+$("#grid").addEventListener("click", e => {
+  const card = e.target.closest(".card"); if (card) openDetail(card.dataset.id);
+});
+document.addEventListener("keydown", e => {
+  if (e.key !== "Escape") return;
+  if (!$("#viewer").hidden) closeViewer(false);
+  else if (layers.length) layers[layers.length - 1].close();
+});
+
+if ("serviceWorker" in navigator && /^https?:$/.test(location.protocol)) {
+  navigator.serviceWorker.register("sw.js").catch(() => { /* без офлайн-режима */ });
+}
+
+render();
+})();
+</script>
+</body>
+</html>
